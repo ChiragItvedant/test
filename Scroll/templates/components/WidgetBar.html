@@ -1,0 +1,51 @@
+<div id="widget_top_nav" class="w-full h-[50px] px-5 hidden justify-between items-center text-white bg-black border-b border-[#262626] fixed top-0 z-50 max-md:flex">
+
+    <a href="/"><b class="text-xl">Scroll</b></a>
+
+    <a href="/profile" class="flex items-center">
+        <img class="w-10 h-10 rounded-full border border-[#262626] object-cover" 
+            {% if profile_pic.exist %}
+                src="/uploads/{{profile_pic.file}}" 
+            {% else %} 
+                src="/static/{{profile_pic.file}}" 
+            {% endif %} 
+            alt=""
+        >
+    </a>
+
+</div>
+
+
+<div id="widget_bottom_nav"
+    class="w-full h-[50px] hidden justify-around items-center bg-black border-t border-[#262626] fixed bottom-0 z-50 max-md:flex">
+
+    <a href="{% url '/' %}"
+        class="space-x-3 p-2 flex items-center text-white rounded-md hover:cursor-pointer hover:bg-[#1a1a1a] transition-transform">
+        <i class="fa-solid fa-house text-2xl"></i>
+    </a>
+
+
+    <a href="{% url 'search' %}"
+        class="space-x-3 p-2 flex items-center text-white rounded-md hover:cursor-pointer hover:bg-[#1a1a1a] transition-transform">
+        <i class="fa-solid fa-magnifying-glass text-2xl"></i>
+    </a>
+
+    <a href="{% url 'lobby' %}"
+        class="space-x-3 p-3 flex items-center text-white rounded-md hover:cursor-pointer hover:bg-[#1a1a1a] transition-transform relative">
+        <i class="fa-regular fa-comments text-2xl"></i>
+        <div id="chat_widget_notification" class="hidden w-6 h-6 p-[2px] text-center text-sm bg-red-600 absolute top-[2px] -left-2 rounded-full z-50">
+            {% comment %} 9<sup>+</sup> {% endcomment %}
+        </div>
+    </a> 
+
+    <a href="{% url 'posts' %}"
+        class="space-x-3 p-2 flex items-center text-white rounded-md hover:cursor-pointer hover:bg-[#1a1a1a] transition-transform">
+        <i class="fa-regular fa-square-plus text-2xl"></i>
+    </a>
+
+    <a href="{% url 'profile' %}"
+        class="space-x-3 p-2 flex items-center text-white rounded-md hover:cursor-pointer hover:bg-[#1a1a1a] transition-transform">
+        <i class="fa-regular fa-user text-2xl"></i>
+    </a>
+
+</div>

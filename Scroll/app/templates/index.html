@@ -1,0 +1,439 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Scroll{% endblock title %}
+
+{% block body %}
+
+<div class="w-[70%] h-fit py-10 flex flex-col items-center max-2xl:w-full max-md:overflow-hidden max-md:py-0 max-md:my-[50px]">
+
+    <div id="posts_container" class="w-full h-fit space-y-5 flex flex-col items-center text-white">
+
+        {% if no_posts_found %}
+        
+            <div class="space-y-2 max-md:w-full max-md:p-3">
+                <div class="flex items-center space-x-5">
+                    <img class="w-12 h-12 rounded-full object-cover" 
+                        src="{% static 'images/logo_bigR.png' %}"
+                        alt=""
+                    >
+                    <b>Scroll</b>
+                </div>
+    
+                <img class="w-[468px] h-[585px] !my-5 bg-slate-200 rounded-sm border border-[#262626] max-md:w-full max-md:h-[468px] object-cover"
+                    src="{% static 'images/logo.jpg' %}" />
+    
+                <div class="space-x-5">
+                    <a href="#"><i class="fa-regular fa-heart text-2xl"></i></a>
+                    <a href="#"><i class="fa-regular fa-comment text-2xl"></i></a>
+                    <a href="#"><i class="fa-solid fa-share-nodes text-2xl"></i></a>
+                </div>
+    
+                <b class="text-sm">{{100}} likes</b>
+    
+                <b class="w-[468px] text-sm block max-md:w-full">Welcome to scroll this is a dummy post so it does not have any functionality as the a actual post</b>
+    
+                <hr class="!my-4 !mx-1 border-[#262626]" />
+    
+            </div>
+    
+        {% else %}
+        
+            {% for post in post_data %}
+                <div class="space-y-2 max-md:w-full max-md:p-3 posts">
+                    <a href="{{post.added_by_url}}">
+                        <div class="flex items-center space-x-5">
+                            <img class="w-12 h-12 rounded-full object-cover border border-[#262626]" 
+                                {% if post.added_by_profile.exist %}
+                                    src="/uploads/{{post.added_by_profile.file}}" 
+                                {% else %}
+                                    src="/static/{{post.added_by_profile.file}}" 
+                                {% endif %}
+                                alt=""
+                            >
+                            <b>{{post.added_by}}</b>
+                        </div>
+                    </a>
+    
+                    <a href="/posts/{{post.post_id}}">
+                        <img class="w-[468px] h-[585px] !my-5 bg-slate-200 rounded-sm border border-[#262626] object-center max-md:w-full max-md:h-[468px]"
+                            src="/uploads/{{post.file}}" />
+                    </a>
+    
+                    <div class="space-x-5 flex select-none">
+                        {% if post.is_liked %}
+                            <div class="cursor-pointer" id="{{post.post_id}}" onclick="handelLikes(this)">
+                                <i class="fa-solid fa-heart text-2xl text-red-500 pointer-events-none"></i>
+                            </div>
+                        {% else %}
+                            <div class="cursor-pointer" id="{{post.post_id}}" onclick="handelLikes(this)">
+                                <i class="fa-regular fa-heart text-2xl pointer-events-none"></i>
+                            </div>
+                        {% endif %}
+    
+                        <i class="fa-regular fa-comment text-2xl cursor-pointer" onclick="handelComment(event,'comment_box_{{post.post_id}}')"></i>
+    
+                        <i class="fa-solid fa-share-nodes text-2xl cursor-pointer" id="/posts/{{post.post_id}}"
+                            onclick="copyLink(this)"></i>
+                        <p class="hidden text-green-400" id="message/posts/{{post.post_id}}">Link copied to clipboard</p>
+                    </div>
+    
+                    <b class="text-sm select-none" id="post_likes_{{post.post_id}}">{{post.num_of_likes}} likes</b>
+    
+                    <b class="w-[468px] text-sm block">{{post.bio}}</b>
+    
+                    <a href="/posts/{{post.post_id}}" class="block w-fit text-sm text-gray-400">View all comments</a>
+    
+                    <form class="hidden space-x-2" id="comment_box_{{post.post_id}}" onsubmit="handelCommentSubmit(event,'{{post.post_id}}')">
+                        {% csrf_token %}
+                        <input type="text" name="post_id" value="{{post.post_id}}" class="hidden" required>
+                        <textarea name="comment" id="" rows="1" class="w-full py-1 px-2 bg-transparent border rounded-sm focus:outline-0" required></textarea>
+                        <input type="submit" value="Comment" class="w-[20%] h-[35px] self-end bg-white text-black text-sm py-1 rounded-sm cursor-pointer hover:opacity-90 max-md:w-[30%]">
+                    </form>
+    
+                    <p class="hidden text-green-500 text-sm" id="comment_message_{{post.post_id}}">Comment added successfully</p>
+                
+    
+                    <hr class="!my-4 !mx-1 border-[#262626]" />
+                </div>
+            {% endfor %}
+    
+        {% endif %}
+    
+    
+       
+    </div>
+    
+    <div class="opacity-0" id="observer_element"></div>
+
+    <div class="hidden w-fit flex-col items-center" id="loader_container">
+        <img src="{% static 'images/loader.gif' %}" alt="" class="w-[30px]">
+        <p class="text-gray-500">Loading...</p>
+    </div>
+
+</div>
+
+{% comment %} {% endcomment %}
+
+<div class="w-[30%] h-screen py-5 px-10 space-y-10 max-2xl:hidden">
+    <div class="w-full p-2 flex justify-between items-center">
+        <a href="{% url 'profile' %}"  class="flex items-center space-x-5">
+            <img class="w-12 h-12 rounded-full border border-[#262626] object-cover" 
+                {% if profile_pic.exist %} 
+                    src="/uploads/{{profile_pic.file}}"
+                {% else %}
+                    src="/static/{{profile_pic.file}}" 
+                {% endif %} 
+                alt=""
+            >
+
+            <div class="text-sm">
+                <b>{{username}}</b>
+                <p class="text-gray-500">Currently logged in as</p>
+            </div>
+        </a>
+
+        <a class="h-fit mr-10 py-2 px-3 text-red-500 border border-red-500 rounded-[4px]" href="{% url 'logout' %}">
+            Logout
+        </a>
+    </div>
+
+
+{% comment %}
+    https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Cat_August_2010-4.jpg/1200px-Cat_August_2010-4.jpg
+{% endcomment %}
+
+    <div class="space-y-5">
+        <h1 class="text-2xl">Suggestions</h1>
+
+        <div class="w-full h-full space-y-5">
+
+            {% if no_suggestions_data %}
+
+            <h1 class="text-center text-gray-500">No suggestions</h1>
+
+            {% else %}
+
+            {% for data in suggestions_data %}
+
+                <a href="/users/{{data.username}}">
+                    <div class="w-full p-2 flex justify-between items-center">
+                        <div class="flex items-center space-x-5">
+                            <img class="w-12 h-12 rounded-full object-cover border border-[#262626]" 
+                                {% if data.added_by_profile.exist %}
+                                    src="/uploads/{{data.added_by_profile.file}}" 
+                                {% else %}
+                                    src="/static/{{data.added_by_profile.file}}" 
+                                {% endif %}
+                                alt=""
+                            >
+
+                            <div class="text-sm">
+                                <b>{{data.added_by}}</b>
+                                <p class="text-gray-500">Suggested for you</p>
+                            </div>
+                        </div>
+
+                        <a href="/users/{{data.username}}" class="h-fit mx-3 py-1 px-2 text-sm text-blue-500 rounded-md">Follow</a>
+                    </div>
+                </a>
+
+            {% endfor %}
+
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+
+
+<script>
+
+    function getCookie(cname) {
+        let name = cname + "=";
+        let decodedCookie = decodeURIComponent(document.cookie);
+        let ca = decodedCookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == ' ') {
+                c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+                return c.substring(name.length, c.length);
+            }
+        }
+        return "";
+    }
+
+    function copyLink(e) {
+
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(window.location.origin + e.id);
+
+            document.getElementById('message' + e.id).style.display = 'inline';
+
+            setTimeout(function () {
+                document.getElementById('message' + e.id).style.display = 'none';
+            }, 1000);
+        }
+        else{
+            alert('Clipboard is not available')
+        }
+      
+    }
+
+    async function handelLikes(e) {
+
+        try {
+            let res = await fetch('{% url "likes" %}', {
+                method: 'POST',
+                headers: {
+                    "X-CSRFToken": getCookie("csrftoken"),
+                    "Content-Type": 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    "post_id": e.id,
+                })
+
+            });
+            res = await res.json();
+
+            const post_likes = document.getElementById('post_likes_' + e.id);
+            if (res.is_liked == true) {
+                e.innerHTML = '<i class="fa-solid fa-heart text-2xl text-red-500 pointer-events-none"></i>';
+                post_likes.innerText = res.current_likes + ' likes';
+            }
+            else {
+                e.innerHTML = '<i class="fa-regular fa-heart text-2xl pointer-events-none"></i>';
+                post_likes.innerText = res.current_likes + ' likes';
+            }
+        } catch (error) {
+            console.log(error);
+        }
+
+    }
+
+    function handelComment(e,id){
+        const comment_box = document.getElementById(id);
+
+        function closeCommentBox(event) {
+            const target = event.target;
+            if (target !== comment_box.children[2] && target !== comment_box.children[3] && target !== e.target) {
+                comment_box.style.display = 'none';
+                window.removeEventListener('click', closeCommentBox);
+            }
+        }
+
+        if (comment_box.style.display !== 'flex') {
+            comment_box.style.display = 'flex';
+            comment_box.children[2].focus();
+            window.addEventListener('click', closeCommentBox);
+        }
+        else{
+            comment_box.style.display = 'none';
+        }
+        
+    }
+
+    async function handelCommentSubmit(e,id){
+        e.preventDefault();
+        const element = e.target;
+
+        if (element.children[2].value != '') {
+            try {
+                let res = await fetch('{% url "comments" %}', {
+                    method: 'POST',
+                    headers: {
+                        "X-CSRFToken": getCookie("csrftoken"),
+                        "Content-Type": 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "post_id": id,
+                        "comment": element.children[2].value,
+                    })
+
+                });
+                res = await res.json();
+
+                if (res.status === 200) {
+                    const comment_message = document.getElementById('comment_message_' + id);
+                    element.style.display = 'none';
+                    comment_message.style.display = 'block';
+                    setTimeout(() => {
+                        comment_message.style.display = 'none';
+                    }, 1000);
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        }
+    }
+
+</script>
+
+{% comment %} For infinite scroll {% endcomment %}
+<script>
+
+    const posts = document.querySelectorAll('.posts');
+    let current_element = posts[posts.length - 2];
+    let current_page = 1;
+    let get_post = true;
+
+    const observer = new IntersectionObserver((entries)=>{
+
+        entries.forEach(async(entry) => {
+            if (entry.isIntersecting) {
+                current_element && observer.unobserve(current_element);
+                document.getElementById('loader_container').style.display = 'flex';
+
+                let res = await fetch('{% url "get_posts" %}',{
+                    method:"POST",
+                       headers: {
+                        "X-CSRFToken": getCookie("csrftoken"),
+                        "Content-Type": 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "posts_limit": parseInt('{{posts_limit}}'),
+                        "total_num_posts": parseInt('{{total_num_posts}}'),
+                        "current_page": current_page,
+                    })
+                });
+                res = await res.json();
+                {% comment %} console.log(res); // For debugging {% endcomment %}
+                if (res.status === 200 && res.more_post) {
+                    current_page = res.current_page;
+                    get_post = res.more_post;
+
+                    let html = '';
+
+                    res.posts_data.forEach(post => {
+                        html += `
+                            <div class="space-y-2 max-md:w-full max-md:p-3 posts">
+                                <a href="${post.added_by_url}">
+                                    <div class="flex items-center space-x-5">
+                                        <img class="w-12 h-12 rounded-full object-cover border border-[#262626]"
+                                            src="${post.added_by_profile.exist ? `/uploads/${post.added_by_profile.file}` : `/static/${post.added_by_profile.file}`}"
+                                            alt=""
+                                        >
+                                        <b>${post.added_by}</b>
+                                    </div>
+                                </a>
+
+                                <a href="/posts/${post.post_id}">
+                                    <img class="w-[468px] h-[585px] !my-5 bg-slate-200 rounded-sm border border-[#262626] object-center max-md:w-full max-md:h-[468px]"
+                                        src="/uploads/${post.file}" />
+                                </a>
+
+                                <div class="space-x-5 flex select-none">
+                                    ${
+                                        post.is_liked ?
+                                            `
+                                                <div class="cursor-pointer" id="${post.post_id}" onclick="handelLikes(this)">
+                                                    <i class="fa-solid fa-heart text-2xl text-red-500 pointer-events-none"></i>
+                                                </div>
+                                            `
+                                            :
+                                            `
+                                                <div class="cursor-pointer" id="${post.post_id}" onclick="handelLikes(this)">
+                                                    <i class="fa-regular fa-heart text-2xl pointer-events-none"></i>
+                                                </div>
+                                            `
+                                    }
+
+                                    <i class="fa-regular fa-comment text-2xl cursor-pointer" onclick="handelComment(event,'comment_box_${post.post_id}')"></i>
+
+                                    <i class="fa-solid fa-share-nodes text-2xl cursor-pointer" id="/posts/${post.post_id}"
+                                        onclick="copyLink(this)"></i>
+                                    <p class="hidden text-green-400" id="message/posts/{{post.post_id}}">Link copied to clipboard</p>
+                                </div>
+
+                                <b class="text-sm select-none" id="post_likes_{{post.post_id}}">${post.num_of_likes} likes</b>
+
+                                <b class="w-[468px] text-sm block">${post.bio}</b>
+
+                                <a href="/posts/${post.post_id}" class="block w-fit text-sm text-gray-400">View all comments</a>
+
+                                <form class="hidden space-x-2" id="comment_box_${post.post_id}" onsubmit="handelCommentSubmit(event,'${post.post_id}')">
+                                    {% csrf_token %}
+                                    <input type="text" name="post_id" value="${post.post_id}" class="hidden" required>
+                                    <textarea name="comment" id="" rows="1" class="w-full py-1 px-2 bg-transparent border rounded-sm focus:outline-0" required></textarea>
+                                    <input type="submit" value="Comment" class="w-[20%] h-[35px] self-end bg-white text-black text-sm py-1 rounded-sm cursor-pointer hover:opacity-90 max-md:w-[30%]">
+                                </form>
+
+                                <p class="hidden text-green-500 text-sm" id="comment_message_${post.post_id}">Comment added successfully</p>
+
+
+                                <hr class="!my-4 !mx-1 border-[#262626]" />
+                            </div>
+                
+                        `
+                    });
+                    document.getElementById('loader_container').style.display = 'none';
+                    document.getElementById('posts_container').innerHTML += html; 
+
+                    const posts = document.querySelectorAll('.posts');
+                    current_element = posts[posts.length - 2];
+                    current_element && observer.observe(current_element);
+                }
+                else{
+                    document.getElementById('loader_container').style.display = 'none';
+                    current_element && observer.unobserve(current_element);
+                    document.getElementById('observer_element') && observer.unobserve(document.getElementById('observer_element'));
+                    get_post = res.more_post;
+                }
+            } 
+        });
+
+    });
+
+    current_element && observer.observe(current_element);
+    document.getElementById('observer_element') && observer.observe(document.getElementById('observer_element'));
+    
+</script>
+
+
+{% endblock body %}

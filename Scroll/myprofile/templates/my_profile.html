@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Scroll | {{username}}{% endblock title %}
+
+
+{% block body %}
+
+<div class="w-full h-fit py-[30px] flex justify-center max-md:my-[50px]">
+
+    <div class="w-[950px] space-y-8">
+        
+        <header class="flex p-8 items-center max-md:pb-5 max-md:py-0">
+
+            <img
+                class="w-[150px] mr-[100px] h-[150px] bg-white rounded-full object-cover border border-[#262626] max-md:w-[70px] max-md:h-[70px] max-md:mr-5"
+                {% if profile_pic.exist %}
+                    src="/uploads/{{profile_pic.file}}" 
+                {% else %}
+                    src="/static/{{profile_pic.file}}" 
+                {% endif %}
+                alt=""
+            >
+
+            <div class="h-fit p-5 space-y-5 max-md:space-y-[10px]">
+                <p>{{username}}</p>
+
+                <div class="space-x-5 flex max-sm:self-center">
+                    <b class="">
+                        {% if num_of_posts %}
+                            {{num_of_posts}} posts
+                        {% else %}
+                            0 posts
+                        {% endif %}
+                    </b>
+                    <b class="">
+                        {% if num_of_followers %}
+                            {{num_of_followers}} followers
+                        {% else %}
+                            0 followers
+                        {% endif %}
+                    </b>
+                </div>
+            </div>
+            
+        </header>
+
+        <div class="flex w-full px-3 !m-0 space-x-3 ">
+            <a href="{% url 'edit' %}" class=" w-full p-2 text-center bg-gray-500 rounded max-md:text-xs">Edit Profile</a>
+            <a href="{% url 'logout' %}" class=" w-full p-2 text-center bg-red-500 rounded max-md:text-xs">Logout</a>
+        </div>
+
+
+        <hr class="border-[#262626]">
+
+        
+        <div class="flex justify-center">
+
+            <div class="w-[924px] flex flex-wrap gap-2 max-md:w-[324px]">
+
+                {% if not_found %}
+
+                    <div class="w-full max-md:text-sm">
+                        <h1 class="text-center block text-gray-500">Share Photos</h1>
+                        <p class="text-center block text-gray-500">When you share photos, they will appear on your profile.</p>
+                    </div> 
+                
+                {% else %}
+
+                    {% for post in data %}
+                        <a href="/posts/{{post.post_id}}">
+                            <img src="/uploads/{{post.file}}" class="w-[300px] h-[300px] object-cover max-md:w-[100px] max-md:h-[100px]" />
+                        </a>
+                    {% endfor %}
+
+                {% endif %}
+
+            </div>
+
+        </div>
+        
+        
+    </div>
+    
+</div>
+
+{% endblock body %}

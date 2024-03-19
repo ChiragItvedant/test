@@ -1,0 +1,41 @@
+<a href="{% url '/' %}" class="hover:cursor-pointer"><h1 class="mb-10 text-5xl font-mono max-xl:hidden">Scroll</h1></a>
+
+<div class="flex flex-col space-y-5">
+    <a  href="{% url '/' %}"
+        class="space-x-3 p-3 flex items-center text-white rounded-md hover:cursor-pointer hover:bg-[#1a1a1a] transition-transform">
+        <i class="fa-solid fa-house text-2xl"></i>
+        <h1 class="text-xl max-xl:hidden">Home</h1>
+    </a>
+
+
+    <a  href="{% url 'search' %}"
+        class="space-x-3 p-3 flex items-center text-white rounded-md hover:cursor-pointer hover:bg-[#1a1a1a] transition-transform">
+        <i class="fa-solid fa-magnifying-glass text-2xl"></i>
+        <h1 class="text-xl max-xl:hidden">Search</h1>
+    </a>
+
+    <a href="{% url 'lobby' %}"
+        class="space-x-3 p-3 flex items-center text-white rounded-md hover:cursor-pointer hover:bg-[#1a1a1a] transition-transform relative">
+        <i class="fa-regular fa-comments text-2xl"></i>
+        <h1 class="text-xl max-xl:hidden">Chat</h1>
+        <div id="chat_notification" class="hidden w-6 h-6 p-[2px] text-center text-sm bg-red-600 absolute top-0 -left-2 rounded-full z-50">
+            
+        </div>
+    </a> 
+
+    <a  href="{% url 'posts' %}"
+        class="space-x-3 p-3 flex items-center text-white rounded-md hover:cursor-pointer hover:bg-[#1a1a1a] transition-transform">
+        <i class="fa-regular fa-square-plus text-2xl"></i>
+        <h1 class="inline-block text-xl max-xl:hidden">Create</h1>
+    </a>
+
+    <a  href="{% url 'profile' %}"
+        class="space-x-3 p-3 flex items-center text-white rounded-md hover:cursor-pointer hover:bg-[#1a1a1a] transition-transform">
+        <i class="fa-regular fa-user text-2xl"></i>
+        <h1 class="text-xl max-xl:hidden">Profile</h1>
+    </a>
+
+
+
+
+</div>

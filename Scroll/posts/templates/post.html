@@ -1,0 +1,329 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scroll | {{data.added_by}}</title>
+    {% include "components/Favicons.html" %}
+    <link rel="stylesheet" href="{% static "css/output.css" %}">
+    <link href="{% static 'fontawesomefree/css/all.min.css' %}" rel="stylesheet" type="text/css">
+</head>
+<body class="w-full h-fit py-16 space-y-10 flex flex-col items-center bg-black text-white max-md:py-0">
+    
+    {% if is_owner %}
+
+        {% if not data.is_public %}
+
+            <h1 class="p-2 self-start text-gray-500 border border-gray-500 rounded-md fixed top-3 left-2 max-md:!m-2 max-md:static max-sm:self-center">Private Post</h1>
+
+        {% endif %}
+
+    {% endif %}
+
+    
+    <div class="max-w-[466px] !mt-0 space-y-2 max-md:w-full max-md:p-3 max-md:overflow-hidden">
+
+        <a href="{{data.added_by_url}}">
+            <div class="flex items-center space-x-5">
+                <img 
+                    class="w-12 h-12 rounded-full object-cover"
+                    {% if data.added_by_profile.exist %}
+                        src="/uploads/{{data.added_by_profile.file}}" 
+                    {% else %}
+                        src="/static/{{data.added_by_profile.file}}"
+                    {% endif %}
+                    alt=""
+                >
+                <b>{{data.added_by}}</b>
+            </div>
+        </a>
+        
+
+        <img 
+            class="w-[468px] h-[585px] !my-5 bg-slate-200 rounded-sm border border-[#262626] object-center max-md:w-full max-md:h-[468px]"
+            src="/uploads/{{data.file}}"
+        />
+
+        <div class="flex justify-between select-none">
+            <div class="flex space-x-5">
+
+                {% if data.is_liked %}
+                    <div class="cursor-pointer" id="{{data.post_id}}" onclick="handelLikes(this)">
+                        <i class="fa-solid fa-heart text-2xl text-red-500 pointer-events-none"></i>
+                    </div>
+                {% else %}
+                    <div class="cursor-pointer" id="{{data.post_id}}" onclick="handelLikes(this)">
+                        <i class="fa-regular fa-heart text-2xl pointer-events-none"></i>
+                    </div>
+                {% endif %}
+
+                <i class="fa-regular fa-comment text-2xl cursor-pointer" onclick="handelComment(event,'comment_box_{{data.post_id}}')"></i>
+
+                <i class="fa-solid fa-share-nodes text-2xl cursor-pointer" id="/posts/{{data.post_id}}" onclick="copyLink(this)"></i>
+                <p class="hidden text-green-400" id="message/posts/{{data.post_id}}">Link copied to clipboard</p>
+
+            </div>
+
+            {% if is_owner %}
+            
+                <div class="space-x-5 flex">
+
+             
+                    <a href="/edit_posts/{{data.post_id}}"><i class="fa-regular fa-pen-to-square text-2xl cursor-pointer"></i></a>
+                    <i class="fa-regular fa-trash-can text-2xl text-red-500 cursor-pointer" onclick="handelDelete('{{data.post_id}}')"></i>
+
+                </div>
+            
+            {% endif %}
+        </div>
+  
+        <b class="text-sm" id="post_likes_{{data.post_id}}">{{data.num_of_likes}} likes</b>
+        
+        <b class="w-[468px] text-sm block">{{data.bio}}</b>
+
+        
+        <form class="hidden space-x-2" id="comment_box_{{data.post_id}}" onsubmit="handelCommentSubmit(event,'{{data.post_id}}')">
+            {% csrf_token %}
+            <input type="text" name="post_id" value="{{data.post_id}}" class="hidden" required>
+            <textarea name="comment" id="" rows="1" class="w-full py-1 px-2 bg-transparent border rounded-sm focus:outline-0" required></textarea>
+            <input type="submit" value="Comment" class="w-[20%] h-[35px] self-end bg-white text-black text-sm py-1 rounded-sm cursor-pointer hover:opacity-90 max-md:w-[30%]">
+        </form>
+
+        <p class="hidden text-green-500 text-sm" id="comment_message_{{data.post_id}}">Comment added successfully</p>
+        <p id="res_message" class="hidden text-green-500 text-sm"></p>
+
+        <hr class="!my-4 !mx-1 border-[#262626]"/>
+
+        <div class="space-y-3" id="comment_data_{{data.post_id}}">
+            
+            {% for comment in comment_data %}
+            
+                <div class="w-full p-2 flex justify-between items-center">
+                    <div class="flex items-center space-x-5">
+                        <img class="w-10 h-10 self-start rounded-full object-cover border border-[#262626]" 
+                            {% if comment.added_by_profile.exist %}
+                                src="/uploads/{{comment.added_by_profile.file}}" 
+                            {% else %}
+                                src="/static/{{comment.added_by_profile.file}}" 
+                            {% endif %}
+                            alt=""
+                        >
+
+                        <div class="w-full text-sm break-words">
+                            <b>{{comment.added_by}}</b>
+                            <p class="text-sm">{{comment.comment}}</p>
+                        </div>
+                    </div>
+                </div>
+                
+            {% endfor %}
+            
+            
+        </div>
+            
+    </div>
+
+
+
+<script>
+
+    function getCookie(cname) {
+        let name = cname + "=";
+        let decodedCookie = decodeURIComponent(document.cookie);
+        let ca = decodedCookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == ' ') {
+                c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+                return c.substring(name.length, c.length);
+            }
+        }
+        return "";
+    }
+
+    function copyLink(e) {
+
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(window.location.origin + e.id);
+
+            document.getElementById('message' + e.id).style.display = 'inline';
+
+            setTimeout(function () {
+                document.getElementById('message' + e.id).style.display = 'none';
+            }, 1000);
+        }
+        else{
+            alert('Clipboard is not available')
+        }
+      
+    }
+
+    async function handelLikes(e) {
+
+        try {
+            let res = await fetch('{% url "likes" %}', {
+                method: 'POST',
+                headers: {
+                    "X-CSRFToken": getCookie("csrftoken"),
+                    "Content-Type": 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    "post_id": e.id,
+                })
+
+            });
+            res = await res.json();
+
+            const post_likes = document.getElementById('post_likes_' + e.id);
+            if (res.is_liked == true) {
+                e.innerHTML = '<i class="fa-solid fa-heart text-2xl text-red-500 pointer-events-none"></i>';
+                post_likes.innerText = res.current_likes + ' likes';
+            }
+            else {
+                e.innerHTML = '<i class="fa-regular fa-heart text-2xl pointer-events-none"></i>';
+                post_likes.innerText = res.current_likes + ' likes';
+            }
+        } catch (error) {
+            console.log(error);
+        }
+
+    }
+
+    
+    function handelComment(e,id){
+        const comment_box = document.getElementById(id);
+
+        function closeCommentBox(event) {
+            const target = event.target;
+            if (target !== comment_box.children[2] && target !== comment_box.children[3] && target !== e.target) {
+                comment_box.style.display = 'none';
+                window.removeEventListener('click', closeCommentBox);
+            }
+        }
+
+        if (comment_box.style.display !== 'flex') {
+            comment_box.style.display = 'flex';
+            comment_box.children[2].focus();
+            window.addEventListener('click', closeCommentBox);
+        }
+        else{
+            comment_box.style.display = 'none';
+        }
+        
+    }
+
+    async function handelCommentSubmit(e,id){
+        e.preventDefault();
+        const element = e.target;
+
+        if (element.children[2].value != '') {
+            try {
+                let res = await fetch('{% url "comments" %}', {
+                    method: 'POST',
+                    headers: {
+                        "X-CSRFToken": getCookie("csrftoken"),
+                        "Content-Type": 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "post_id": id,
+                        "comment": element.children[2].value,
+                    })
+
+                });
+                element.children[2].value = '';
+
+                res = await res.json();
+                if (res.status === 200) {
+                    const comment_message = document.getElementById('comment_message_' + id);
+                    const comment_data = document.getElementById('comment_data_' + id);
+
+                    element.style.display = 'none';
+                    comment_message.style.display = 'block';
+                    setTimeout(() => {
+                        comment_message.style.display = 'none';
+                    }, 1000);
+
+                    let commentData = '';
+
+                    if (res.comment_data.length > 0) {
+                        res.comment_data.forEach(comment => {
+                        
+                            commentData += `
+                                <div class="w-full p-2 flex justify-between items-center">
+                                    <div class="flex items-center space-x-5">
+                                        <img class="w-10 h-10 self-start rounded-full object-cover border border-[#262626]" 
+                                                src="${comment.added_by_profile.exist ? '/uploads/' + comment.added_by_profile.file : '/static/' +comment.added_by_profile.file}" 
+                                            alt=""
+                                        >
+
+                                        <div class="w-full text-sm break-words">
+                                            <b>${comment.added_by}</b>
+                                            <p class="text-sm">${comment.comment}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            comment_data.innerHTML = commentData;
+                        });
+
+                    }
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        }
+    }
+
+    async function handelDelete(id){
+        const delete_verified = confirm('Are you sure you want to delete this post');
+
+        if (delete_verified) {
+            
+            try {
+                let res = await fetch("{% url 'post_delete' %}", {
+                    method: 'POST',
+                    headers: {
+                        "X-CSRFToken": getCookie("csrftoken"),
+                        "Content-Type": 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "post_id": id,
+                    })
+                });
+                res = await res.json();
+
+                if (res.status === 200) {
+                    const res_message = document.getElementById('res_message');
+                    res_message.textContent = res.message;
+                    res_message.style.display = 'block';
+                    res_message.scrollIntoView(true);
+
+                    setTimeout(function () {
+                        res_message.style.display = 'none';
+                        window.location.href = window.location.origin + '/profile';
+                    }, 1500);
+                }
+            } catch (error) {
+                console.log(error);
+            }
+
+        }
+
+    }
+
+</script>
+
+    {% comment %} <script src="{% static 'js/tailwindcdn.js' %}"></script> {% endcomment %}
+    <script src="{% static 'fontawesomefree/js/all.min.js' %}"></script>
+
+    {% include "components/Socket.html" %}
+
+</body>
+</html>
